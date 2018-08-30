@@ -16,7 +16,7 @@ import net.java.games.input.ControllerEnvironment;
 import sprites.Creature;
 
 public class ControlManager implements KeyListener, MouseListener, MouseMotionListener, MouseWheelListener, Runnable {
-	static public double zoom = 1, vx = 0, vy = 0, vx2 = 0, vy2 = 0;
+	public double zoom = 1, vx = 0, vy = 0, vx2 = 0, vy2 = 0;
 	boolean keyW = false, 
 			keyA = false, 
 			keyS = false, 
