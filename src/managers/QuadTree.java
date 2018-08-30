@@ -121,7 +121,6 @@ public class QuadTree implements Cloneable{
 
     public ArrayList<Sprite> get() {
         ArrayList<Sprite> fod = new ArrayList<Sprite>();
-        sprites.trimToSize();
         Sprite[] loopS = sprites.toArray(new Sprite[0]);
         for (Sprite s : loopS) {
             fod.add(s);
@@ -138,7 +137,6 @@ public class QuadTree implements Cloneable{
 
     public <T extends Sprite> int count(Class<T> clazz) {
         int c = 0;
-        sprites.trimToSize();
         Sprite[] loopS = sprites.toArray(new Sprite[0]);
         for (Sprite s : loopS) {
             if (clazz.isInstance(s))
@@ -156,7 +154,6 @@ public class QuadTree implements Cloneable{
 
     public <T extends Sprite> ArrayList<T> get(Class<T> clazz) {
         ArrayList<T> fod = new ArrayList<T>();
-        sprites.trimToSize();
         Sprite[] loopS = sprites.toArray(new Sprite[0]);
         for (Sprite s : loopS) {
             if (clazz.isInstance(s))
@@ -234,7 +231,6 @@ public class QuadTree implements Cloneable{
     
     public Vector<Sprite> query(Rectangle r, Rectangle recur) {
         Vector<Sprite> fod = new Vector<Sprite>();
-        sprites.trimToSize();
         Sprite[] loopS = sprites.toArray(new Sprite[0]);
         if(recur.intersects(r) || r.intersects(recur)){
             for (Sprite s : loopS) {
@@ -254,7 +250,6 @@ public class QuadTree implements Cloneable{
     public Vector<Sprite> query(Line l, Rectangle recur) {
         Vector<Sprite> fod = new Vector<Sprite>();
         if(recur.intersects(l)){
-            sprites.trimToSize();
             Sprite[] loopS = sprites.toArray(new Sprite[0]);
             for (Sprite s : loopS) {
                 fod.add(s);
@@ -276,7 +271,6 @@ public class QuadTree implements Cloneable{
     }
     
     public void KILL() {
-        sprites.trimToSize();
         Sprite[] loopS = sprites.toArray(new Sprite[0]);
         for (Sprite s : loopS) {
             remove(s);

@@ -10,7 +10,7 @@ import geom.Point;
 import managers.QuadTree;
 
 abstract public class Sprite {
-	double r;
+	float r;
 	public Point loc;
 	double maxlife, life;
 	public Point innerloc;
@@ -20,7 +20,7 @@ abstract public class Sprite {
 	boolean data = false;
 	public QuadTree holder;
 
-	public Sprite(double x, double y, double r1, int health, int range, Color c) {
+	public Sprite(double x, double y, float r1, int health, int range, Color c) {
 		r = r1;
 		innerloc = new Point((x + range) / (2.0 * range), (-y + range) / (2.0 * range));
 		this.range = range;
