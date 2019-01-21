@@ -10,6 +10,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -23,6 +24,7 @@ import gui.InfoPanel;
 import gui.Terminal;
 import sprites.Creature;
 import sprites.Food;
+import sprites.Sprite;
 
 //endregion
 public class Main extends JFrame {
@@ -54,8 +56,9 @@ class EvolvePanel extends JPanel implements Runnable {
 	static Thread runner, painter, creater;
 	AffineTransform tx = new AffineTransform();
 	InfoPanel info;
-	QuadTree tree = new QuadTree();
-	QuadTree safeclone;
+	final QuadTree tree = new QuadTree();
+	QuadTree safeclone = new QuadTree(tree);
+	final HashSet<Sprite> queue = new HashSet<>();
 	boolean paused = false;
 	Terminal terminal;
 
@@ -79,7 +82,6 @@ class EvolvePanel extends JPanel implements Runnable {
 		if (painter == null) {
 			painter = new Thread(new Runnable() {
 				public void run() {
-					safeclone = new QuadTree(tree);
 					while (true) {
 						terminal.update(new Rectangle2D.Double(0, 0, getWidth(), getHeight()));
 						repaint();
@@ -105,12 +107,16 @@ class EvolvePanel extends JPanel implements Runnable {
 							if (cr.net.nodes.get(Settings.inputcount + 6).in.size() > 0
 									&& cr.net.nodes.get(Settings.inputcount + 5).in.size()
 											+ cr.net.nodes.get(Settings.inputcount + 4).in.size() > 0)
-								tree.add(cr);
+											synchronized(queue){
+												queue.add(cr);
+											}
 						}
 						if (safeclone.count(Food.class) < Settings.foodcap) {// create new food
-							tree.add(new Food(rnd.nextInt(2 * Settings.range) - Settings.range,
-									rnd.nextInt(2 * Settings.range) - Settings.range, rnd.nextInt(14) + 2, false,
-									Settings.range));
+							synchronized(queue){
+								queue.add(new Food(rnd.nextInt(2 * Settings.range) - Settings.range,
+										rnd.nextInt(2 * Settings.range) - Settings.range, rnd.nextInt(14) + 2, false,
+										Settings.range));
+							}
 						}
 						// endregion
 						try {
@@ -129,10 +135,11 @@ class EvolvePanel extends JPanel implements Runnable {
 		while (true) {
 			if (!paused) {
 				tree.reorg();
-				for (int i = 0; i < Settings.netPerCycle; i++) {
-					tree.get(Creature.class).forEach(c -> c.runNet());
-				}
 				tree.runSP();
+			}
+			synchronized(queue){
+				tree.addAll(queue);
+				queue.clear();
 			}
 			safeclone = new QuadTree(tree);
 			try {

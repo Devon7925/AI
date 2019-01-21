@@ -2,7 +2,9 @@ package brain;
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import calc.Arith;
 import calc.Settings;
@@ -16,10 +18,10 @@ public class Network {
         nodes = new ArrayList<>();
         toUpdate = new ArrayList<>();
         for (int i = 0; i < Settings.inputcount; i++) {
-            nodes.add(new NOR(false, new Short[0], 0.1, 0.02 * i + 0.009, this));
+            nodes.add(new NOR(true, new Short[0], 0.1f, 0.02f * i + 0.009f, this));
         }
         for (int i = 0; i < Settings.outputcount; i++) {
-            nodes.add(new NOR(false, new Short[0], 0.9, 0.36 + 0.02 * i, this));
+            nodes.add(new NOR(false, new Short[0], 0.9f, 0.36f + 0.02f * i, this));
         }
     }
 
@@ -38,10 +40,11 @@ public class Network {
     }
 
     public void run() {
-        toUpdate.forEach(n -> n.run());
-        ArrayList<NOR> newtoUpdate = new ArrayList<>();
-        nodes.stream().filter(n -> n.val != n.nextval).forEach(n -> newtoUpdate.addAll(n.run2(newtoUpdate)));
-        toUpdate = newtoUpdate;
+        toUpdate.removeIf(n -> n.run());
+        toUpdate.forEach(n -> n.val = n.nextval);
+        toUpdate = new ArrayList<>(
+            toUpdate.stream().flatMap(n -> n.out.stream()).distinct().map(nodes::get)
+        .collect(Collectors.toList()));
     }
 
     public boolean[] giveOutput() {
@@ -61,9 +64,9 @@ public class Network {
             if (node.val)
                 d.setColor(Color.GREEN, 150);
             d.drawRect(new Rectangle2D.Double(node.x - 0.005, node.y - 0.009, 0.01, 0.018));
-            for (int i1 = 0; i1 < node.in.size(); i1++) {
+            for (Short s : node.in) {
                 d.setColor(Color.BLACK, 150);
-                d.drawLine(node.x, node.y, nodes.get(node.in.get(i1)).x, nodes.get(node.in.get(i1)).y, Color.BLUE, 150);
+                d.drawLine(node.x, node.y, nodes.get(s).x, nodes.get(s).y, Color.BLUE, 150);
             }
         }
     }
@@ -73,9 +76,8 @@ public class Network {
             node.in.removeIf(n -> n == id);
         }
         for (NOR node : nodes) {
-            for (int i1 = 0; i1 < node.in.size(); i1++) {
-                node.in.set(i1, (short)(node.in.get(i1) + ((node.in.get(i1) > id) ? -1 : 0)));
-            }
+            node.in  = (HashSet<Short>) node.in .stream().map(n -> n + (n > id?-1:0)).map(n -> (Short) n.shortValue()).collect(Collectors.toSet());
+            node.out = (HashSet<Short>) node.out.stream().map(n -> n + (n > id?-1:0)).map(n -> (Short) n.shortValue()).collect(Collectors.toSet());
         }
         nodes.remove(id);
     }
@@ -100,16 +102,24 @@ public class Network {
                     in.add(temp);
                     t++;
                 } while (rand.nextInt(t) == 0);
-                NOR toAdd = new NOR(false, Arith.convertToArrayShort(in), rand.nextDouble(), rand.nextDouble(), this);
+                NOR toAdd = new NOR(false, Arith.convertToArrayShort(in), rand.nextFloat(), rand.nextFloat(), this);
                 nodes.add(toAdd);
-                toAdd.in.forEach(n -> nodes.get(n).out.add((short) nodes.indexOf(toAdd)));
+                short toAddIndex = (short) nodes.indexOf(toAdd);
+                toAdd.in.forEach(n -> nodes.get(n).out.add(toAddIndex));
 
             } else {//modify
                 short index = (short) (rand.nextInt(nodes.size()-Settings.inputcount)+Settings.inputcount);
                 do {
                     short rnd2 = (short) rand.nextInt(100);
                     if (rnd2 < 10 && nodes.get(index).in.size() > 1) {//remove
-                        nodes.get(index).in.remove(rand.nextInt(nodes.get(index).in.size()));
+                        HashSet<Short> torem = new HashSet<>();
+                        for(Short s : nodes.get(index).in){
+                            if(rand.nextBoolean()){
+                                nodes.get(s).out.remove(index);
+                                torem.add(s);
+                            }
+                        }
+                        nodes.get(index).in.removeAll(torem);
                     } else {//add
                         short temp = (short) rand.nextInt(nodes.size()-Settings.outputcount);
                         temp = (short)(temp+(temp>Settings.inputcount?Settings.outputcount:0));

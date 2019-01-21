@@ -2,10 +2,10 @@ package calc;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.Vector;
 
 import brain.NOR;
 import brain.Network;
@@ -17,9 +17,9 @@ import sprites.Sprite;
 public class Arith {
     static Random rnd = new Random();
 
-    public static Rectangle2D scale(Rectangle2D in, double scale) {
-        return new Rectangle2D.Double(in.getX() + (in.getWidth() * (1 - scale)) / 2,
-                in.getY() + (in.getHeight() * (1 - scale)) / 2, in.getWidth() * scale, in.getHeight() * scale);
+    public static Rectangle2D scale(Rectangle2D.Float in, float scale) {
+        return new Rectangle2D.Float((float) (in.getX() + (in.getWidth() * (1 - scale)) / 2),
+        (float) (in.getY() + (in.getHeight() * (1 - scale)) / 2), (float) (in.getWidth() * scale), (float) (in.getHeight() * scale));
     }
 
     public static Rectangle2D scale(Rectangle2D in, double scalex, double scaley) {
@@ -142,14 +142,8 @@ public class Arith {
             indexb++;
             if (indexa >= a.nodes.size() && indexb >= b.nodes.size()) {
                 for (NOR node : mix.nodes) {
-                    if (node.in.size() > 0) {
-                        for (int i = 0; i < node.in.size(); i++) {
-                            if (node.in.get(i) >= mix.nodes.size()) {
-                                node.in.remove(i);
-                                i--;
-                            }
-                        }
-                    }
+                    node.in.removeIf(n -> n >= mix.nodes.size());
+                    node.out.removeIf(n -> n >= mix.nodes.size());
                 }
                 return mix;
             }
@@ -177,11 +171,9 @@ public class Arith {
      * @param clazz the type to return
      * @param s     the dataset
      */
-    public static <T extends Sprite> Vector<T> filter(Class<T> clazz, Vector<Sprite> s) {
-        Vector<T> fod = new Vector<T>(s.size() / 2);
-        s.trimToSize();
-        Sprite[] loopS = s.toArray(new Sprite[0]);
-        for (Sprite sp : loopS) {
+    public static <T extends Sprite> HashSet<T> filter(Class<T> clazz, HashSet<Sprite> s) {
+        HashSet<T> fod = new HashSet<T>(s.size() / 2);
+        for (Sprite sp : s) {
             if (clazz.isInstance(sp))
                 fod.add(clazz.cast(sp));
         }

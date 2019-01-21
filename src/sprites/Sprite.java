@@ -20,6 +20,8 @@ abstract public class Sprite {
 	boolean data = false;
 	public QuadTree holder;
 
+	public boolean dead = false;
+
 	public Sprite(double x, double y, float r1, int health, int range, Color c) {
 		r = r1;
 		innerloc = new Point((x + range) / (2.0 * range), (-y + range) / (2.0 * range));
@@ -56,16 +58,15 @@ abstract public class Sprite {
 	}
 
 	public void run() {
-		update();
-		if (life <= 0 || loc.getX() < -Settings.range || loc.getX() > Settings.range || loc.getY() < -Settings.range
-				|| loc.getY() > Settings.range || r <= 0)
-			die();
+			update();
+		if(life <= 0 || loc.getX() < -Settings.range || loc.getX() > Settings.range || loc.getY() < -Settings.range
+				|| loc.getY() > Settings.range || r <= 0) die();
 	}
 
 	abstract void update();
 
 	synchronized void die() {
-		holder.remove(this);
+		dead = true;
 	}
 
 	public void draw(Graphics2D g2) {

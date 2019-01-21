@@ -58,12 +58,12 @@ public class InfoPanel {
         Drawer d = new Drawer(scaleEdit(), g);
         d.setColor(new Color(0, 0, 0, 127));
         d.drawRect(new Rectangle2D.Double(0, 0, 1, 1));
-        c.net.draw(new Drawer(Arith.scale(scaleEdit(), 0.9), g));
+        c.net.draw(new Drawer(Arith.scale(scaleEdit(), 0.9f), g));
     }
 
     public void click(MouseEvent p) {
         if (scaleEdit().contains(p.getPoint())) {
-            Rectangle2D rect = Arith.scale(scaleEdit(), 0.9);
+            Rectangle2D rect = Arith.scale(scaleEdit(), 0.9f);
             Point2D click = new Point2D.Double((p.getX() - rect.getX()) / rect.getWidth(),
                     (p.getY() - rect.getY()) / rect.getHeight());
             if (p.getButton() == MouseEvent.BUTTON1) {
@@ -92,22 +92,22 @@ public class InfoPanel {
 
     public void release(MouseEvent p) {
         if (scaleEdit().contains(p.getPoint())) {
-            Rectangle2D rect = Arith.scale(scaleEdit(), 0.9);
-            Point2D click = new Point2D.Double((p.getX() - rect.getX()) / rect.getWidth(),
-                    (p.getY() - rect.getY()) / rect.getHeight());
+            Rectangle2D rect = Arith.scale(scaleEdit(), 0.9f);
+            Point2D click = new Point2D.Float((float) ((p.getX() - rect.getX()) / rect.getWidth()),
+            (float) ((p.getY() - rect.getY()) / rect.getHeight()));
             if (p.getButton() == MouseEvent.BUTTON1) {
                 if (moveid != -1) {
                     if (Math.abs(clickx - click.getX()) < 0.02 && Math.abs(clicky - click.getY()) < 0.02) {
                         c.net.remove(moveid);
                     } else {
-                        c.net.nodes.get(moveid).setX(click.getX());
-                        c.net.nodes.get(moveid).setY(click.getY());
+                        c.net.nodes.get(moveid).setX((float) click.getX());
+                        c.net.nodes.get(moveid).setY((float) click.getY());
                     }
                     moveid = -1;
                 }
             } else if (p.getButton() == MouseEvent.BUTTON3) {
                 if (Math.abs(start.x - p.getX()) < 10 && Math.abs(start.y - p.getY()) < 10) {
-                    c.net.nodes.add(new NOR(false, new Short[0], click.getX(), click.getY(), c.net));
+                    c.net.nodes.add(new NOR(false, new Short[0], (float) click.getX(), (float) click.getY(), c.net));
                 } else {
                     Point2D startclick = new Point2D.Double((start.getX() - rect.getX()) / rect.getWidth(),
                             (start.getY() - rect.getY()) / rect.getHeight());
@@ -132,12 +132,12 @@ public class InfoPanel {
 
     public void drag(MouseEvent p) {
         if (scaleEdit().contains(p.getPoint())) {
-            Rectangle2D rect = Arith.scale(scaleEdit(), 0.9);
+            Rectangle2D rect = Arith.scale(scaleEdit(), 0.9f);
             Point2D click = new Point2D.Double((p.getX() - rect.getX()) / rect.getWidth(),
                     (p.getY() - rect.getY()) / rect.getHeight());
             if (moveid != -1) {
-                c.net.nodes.get(moveid).setX(click.getX());
-                c.net.nodes.get(moveid).setY(click.getY());
+                c.net.nodes.get(moveid).setX((float) click.getX());
+                c.net.nodes.get(moveid).setY((float) click.getY());
             }
         } else {
         }
@@ -148,11 +148,11 @@ public class InfoPanel {
                 (int) (bounds.getWidth() * superwindow.width), (int) (bounds.getHeight() * superwindow.height));
     }
 
-    public Rectangle2D.Double scaleEdit() {
+    public Rectangle2D.Float scaleEdit() {
         if (draweditor)
-            return new Rectangle2D.Double(superwindow.width / 8, superwindow.height / 8, superwindow.width * 3 / 4,
+            return new Rectangle2D.Float(superwindow.width / 8, superwindow.height / 8, superwindow.width * 3 / 4,
                     superwindow.height * 3 / 4);
         else
-            return new Rectangle2D.Double(0, 0, 0, 0);
+            return new Rectangle2D.Float(0, 0, 0, 0);
     }
 }

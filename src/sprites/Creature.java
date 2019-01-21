@@ -4,8 +4,8 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.util.HashSet;
 import java.util.Random;
-import java.util.Vector;
 
 import brain.Network;
 import calc.Arith;
@@ -78,7 +78,7 @@ public class Creature extends Sprite {
 
 	@Override
 	void update() {
-		Vector<Sprite> set = holder.query(new Square(new Point(loc.getX(), loc.getY()), 32+2*getR()), new Square(new Point(0, 0), 2*Settings.range));
+		HashSet<Sprite> set = holder.query(new Square(new Point(loc.getX(), loc.getY()), 32+2*getR()), new Square(new Point(0, 0), 2*Settings.range));
 		if (rnd.nextInt(100000-age) == 0)
 			net.mutate();
 		int l = 0;
@@ -174,7 +174,7 @@ public class Creature extends Sprite {
 					}
 				}
 				if (breed != null)
-					holder.add(breed);
+					holder.queue.add(breed);
 			}
 		} else {
 			consenting = false;
@@ -183,7 +183,7 @@ public class Creature extends Sprite {
 		}
 		if (outputs[7]) {//shoot
 			if (!stopb) {
-				holder.add(new Bullet(getX() + Math.cos(rot) * 30, getY() - Math.sin(rot) * 30, rot, c,
+				holder.queue.add(new Bullet(getX() + Math.cos(rot) * 30, getY() - Math.sin(rot) * 30, rot, c,
 						Settings.range));
 				hunger -= 0.25;
 				stopb = true;
@@ -210,7 +210,7 @@ public class Creature extends Sprite {
 		for (Bullet b : Arith.filter(Bullet.class, set)) {
 			if (Calc.dist(getX() - b.getX(), getY() - b.getY()) <= b.getR() + getR()) {
 				life -= 15 - Calc.dist(getX() - b.getX(), getY() - b.getY());
-				holder.remove(b);
+				b.die();
 				break;
 			}
 		}
@@ -221,13 +221,13 @@ public class Creature extends Sprite {
 		
 	}
 
-	synchronized void die() {
-		holder.add(Arith.range(new Food(getX(), getY(), 15, true, Settings.range)));
-		holder.remove(this);
+	void die() {
+		holder.queue.add(Arith.range(new Food(getX(), getY(), 15, true, Settings.range)));
+		super.die();
 	}
 
 	public void runNet() {
-		net.run();
+		for (int i = 0; i < Settings.netPerCycle; i++) net.run();
 	}
 
 	void setnet(Network newnet) {

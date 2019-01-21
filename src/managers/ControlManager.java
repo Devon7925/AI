@@ -57,7 +57,7 @@ public class ControlManager implements KeyListener, MouseListener, MouseMotionLi
                     if (focus != null) {
                         focus.hasfocus = false;
                     }
-                    for (Creature c : root.tree.get(Creature.class)) {
+                    for (Creature c : root.safeclone.get(Creature.class)) {
                         if (tx.createTransformedShape(c.view()).contains(new Point2D.Double(1500, 1000))) {
                             focus = c;
                             focus.hasfocus = true;
@@ -214,7 +214,7 @@ public class ControlManager implements KeyListener, MouseListener, MouseMotionLi
 				focus.hasfocus = false;
 				focus = null;
 			}
-			Creature[] checkC = root.tree.get(Creature.class).toArray(new Creature[0]);
+			Creature[] checkC = root.safeclone.get(Creature.class).toArray(new Creature[0]);
 			for (Creature c : checkC) {
 				if (tx.createTransformedShape(c.view()).contains(e.getPoint())) {
 					focus = c;
