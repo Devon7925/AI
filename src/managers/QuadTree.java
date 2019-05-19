@@ -1,17 +1,25 @@
 package managers;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
 
 import calc.Settings;
-import geom.Line;
 import geom.Point;
 import geom.Rectangle;
+import geom.Shape;
 import sprites.Creature;
 import sprites.Sprite;
 
-public class QuadTree implements Cloneable{
+public class QuadTree implements Cloneable {
     QuadTree[][] children;
     QuadTree parent;
     HashSet<Sprite> sprites;
@@ -25,15 +33,19 @@ public class QuadTree implements Cloneable{
     }
 
     public QuadTree(QuadTree q) {
-        if(q.sprites != null) sprites = new HashSet<Sprite>(q.sprites);
-        else sprites = new HashSet<Sprite>(Settings.bucket);
+        if (q.sprites != null)
+            sprites = new HashSet<Sprite>(q.sprites);
+        else
+            sprites = new HashSet<Sprite>(Settings.bucket);
         split = q.split;
-        if(split){
+        if (split) {
             children = new QuadTree[2][2];
             for (int i = 0; i < children.length; i++) {
                 for (int i1 = 0; i1 < children[i].length; i1++) {
-                    if(q.children[i][i1] != null) children[i][i1] = new QuadTree(q.children[i][i1]);
-                    else children[i][i1] = new QuadTree();
+                    if (q.children[i][i1] != null)
+                        children[i][i1] = new QuadTree(q.children[i][i1]);
+                    else
+                        children[i][i1] = new QuadTree();
                     children[i][i1].parent = this;
                 }
             }
@@ -89,7 +101,7 @@ public class QuadTree implements Cloneable{
             split = false;
             for (int i = 0; i < children.length; i++) {
                 for (int i1 = 0; i1 < children[i].length; i1++) {
-                    for(Sprite s : children[i][i1].sprites){
+                    for (Sprite s : children[i][i1].sprites) {
                         s.innerloc = new Point((i + s.innerloc.getX()) / 2, (i1 + s.innerloc.getY()) / 2);
                         s.range *= 2;
                         add(s);
@@ -107,15 +119,8 @@ public class QuadTree implements Cloneable{
         sprites.addAll(queue);
         queue.clear();
         sprites.removeIf(s -> s.dead);
-        sprites.stream().filter(n -> n instanceof Creature)
-            .map(n -> (Creature) n).forEach(n -> n.runNet());
-        if (split) {
-            for (QuadTree[] q1 : children) {
-                for (QuadTree q : q1) {
-                    q.runSP();
-                }
-            }
-        }
+        sprites.stream().filter(n -> n instanceof Creature).map(n -> (Creature) n).forEach(n -> n.runNet());
+        runForNodesIfSplit(n -> n.runSP());
     }
 
     public int count() {
@@ -124,13 +129,7 @@ public class QuadTree implements Cloneable{
 
     public HashSet<Sprite> get() {
         HashSet<Sprite> fod = new HashSet<Sprite>(sprites);
-        if (split) {
-            for (int i = 0; i < children.length; i++) {
-                for (int i1 = 0; i1 < children[i].length; i1++) {
-                    fod.addAll(children[i][i1].get());
-                }
-            }
-        }
+        runForNodesIfSplit(n -> fod.addAll(n.get()));
         return fod;
     }
 
@@ -140,13 +139,7 @@ public class QuadTree implements Cloneable{
             if (clazz.isInstance(s))
                 c++;
         }
-        if (split) {
-            for (int i = 0; i < children.length; i++) {
-                for (int i1 = 0; i1 < children[i].length; i1++) {
-                    c += children[i][i1].count(clazz);
-                }
-            }
-        }
+        c += mapForNodesIfSplit(n -> n.count(clazz)).collect(Collectors.summingInt(n->n));
         return c;
     }
 
@@ -157,13 +150,7 @@ public class QuadTree implements Cloneable{
             if (clazz.isInstance(s))
                 fod.add(clazz.cast(s));
         }
-        if (split) {
-            for (int i = 0; i < children.length; i++) {
-                for (int i1 = 0; i1 < children[i].length; i1++) {
-                    fod.addAll(children[i][i1].get(clazz));
-                }
-            }
-        }
+        runForNodesIfSplit(n -> fod.addAll(n.get(clazz)));
         return fod;
     }
 
@@ -178,11 +165,13 @@ public class QuadTree implements Cloneable{
             for (int i = 0; i < children.length; i++) {
                 for (int i1 = 0; i1 < children[i].length; i1++) {
                     b = children[i][i1].remove(s);
-                    if (b) return true;
+                    if (b)
+                        return true;
                 }
             }
             return false;
-        } else return b;
+        } else
+            return b;
     }
 
     public <T extends Sprite> boolean removeAll(HashSet<T> s) {
@@ -199,18 +188,10 @@ public class QuadTree implements Cloneable{
     }
 
     public void draw(Graphics2D g2, final Rectangle r) {
-        if (split) {
-            for (int i = 0; i < children.length; i++) {
-                for (int i1 = 0; i1 < children[i].length; i1++) {
-                    children[i][i1].draw(g2, r.corner(i, i1));
-                }
-            }
-        }
+        runForNodesIfSplit((i, i1) -> children[i][i1].draw(g2, r.corner(i,i1)));
         g2.setColor(Color.BLACK);
         r.draw(g2);
-        for (Sprite s : get()) {
-            s.draw(g2);
-        }
+        get().forEach(s -> s.draw(g2));
     }
 
     public void drawtree(Graphics2D g2, final Rectangle r) {
@@ -220,55 +201,51 @@ public class QuadTree implements Cloneable{
                     children[i][i1].drawtree(g2, r.corner(i, i1));
                 }
             }
-        }else r.draw(g2);
-    }
-    
-    public HashSet<Sprite> query(Rectangle r, Rectangle recur) {
-        if(recur.intersects(r) || r.intersects(recur)){
-            HashSet<Sprite> fod = new HashSet<>(sprites);
-            if (split) {
-                for (int i = 0; i < children.length; i++) {
-                    for (int i1 = 0; i1 < children[i].length; i1++) {
-                        fod.addAll(children[i][i1].query(r, recur.corner(i, i1)));
-                    }
-                }
-            }
-            return fod;
-        }
-        return new HashSet<>();
+        } else
+            r.draw(g2);
     }
 
-    public HashSet<Sprite> query(Line l, Rectangle recur) {
-        if(recur.intersects(l)){
-            HashSet<Sprite> fod = new HashSet<Sprite>(sprites);
-            if (split) {
-                for (int i = 0; i < children.length; i++) {
-                    for (int i1 = 0; i1 < children[i].length; i1++) {
-                        fod.addAll(children[i][i1].query(l, recur.corner(i, i1)));
-                    }
-                }
-            }
-            return fod;
+    public HashSet<Sprite> query(Shape s, Rectangle recur) {
+        if (recur.intersects(s)) {
+            HashSet<Sprite> rectSprites = new HashSet<Sprite>(sprites);
+            runForNodesIfSplit((i, i1) -> rectSprites.addAll(children[i][i1].query(s, recur.corner(i, i1))));
+            return rectSprites;
         }
         return new HashSet<Sprite>();
     }
 
-    public QuadTree parent(){
-        if(parent == null) return this;
-        else return parent.parent();
+    public QuadTree parent() {
+        return parent == null ? this : parent.parent();
     }
-    
+
     public void KILL() {
         Sprite[] loopS = sprites.toArray(new Sprite[0]);
-        for (Sprite s : loopS) {
+        for (Sprite s : loopS)
             remove(s);
-        }
-        if(split){
-            for (int i = 0; i < children.length; i++) {
-                for (int i1 = 0; i1 < children[i].length; i1++) {
-                    children[i][i1].KILL();
-                }
-            }
-        }
+        runForNodesIfSplit(n -> n.KILL());
+    }
+
+    public void runForNodesIfSplit(Consumer<QuadTree> toRun) {
+        runForNodesIfSplit((i, i1) -> toRun.accept(children[i][i1]));
+    }
+
+    public void runForNodesIfSplit(BiConsumer<Integer, Integer> toRun) {
+        if (split)
+            for (int i = 0; i < children.length; i++)
+                for (int i1 = 0; i1 < children[i].length; i1++)
+                    toRun.accept(i, i1);
+    }
+
+    public <T> Stream<T> mapForNodesIfSplit(BiFunction<Integer, Integer, T> toRun) {
+        Builder<T> builder = Stream.builder();
+        if (split)
+            for (int i = 0; i < children.length; i++)
+                for (int i1 = 0; i1 < children[i].length; i1++)
+                    builder.accept(toRun.apply(i, i1));
+        return builder.build();
+    }
+
+    public <T> Stream<T> mapForNodesIfSplit(Function<QuadTree, T> toRun) {
+        return mapForNodesIfSplit((i, i1) -> toRun.apply(children[i][i1]));
     }
 }

@@ -15,7 +15,7 @@ abstract public class Sprite {
 	double maxlife, life;
 	public Point innerloc;
 	public int range;
-	Color c;
+	final Color c;
 	public String name;
 	boolean data = false;
 	public QuadTree holder;

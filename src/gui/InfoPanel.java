@@ -1,4 +1,5 @@
 package gui;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -7,20 +8,33 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import brain.NOR;
 import calc.Arith;
 import sprites.Creature;
 
 public class InfoPanel {
-    Rectangle2D bounds;
+    final Rectangle2D bounds;
     public Creature c;
-    Button openet;
+    final Button openet;
     public boolean draweditor;
     Dimension superwindow;
     int moveid = -1;
     double clickx, clicky;
     Point start;
+    final HashMap<String, Supplier<String>> properties = new HashMap<>();
+    {
+        properties.put("Sex", () -> c.getSex());
+        properties.put("Age", () -> "" + c.getAge());
+        properties.put("Stamina", () -> "" + c.getStamina());
+        properties.put("Range", () -> "" + c.range);
+        properties.put("Inner loc", () -> c.innerloc.getX() + ", " + c.innerloc.getY());
+        properties.put("Name", () -> "" + c.name);
+        properties.put("Loc", () -> c.getX() + ", " + c.getY());
+    }
 
     public InfoPanel(Rectangle2D r) {
         bounds = r;
@@ -30,7 +44,6 @@ public class InfoPanel {
     public void update(Creature c, Dimension d) {
         this.c = c;
         superwindow = d;
-        openet = new Button("Edit", new Color(0, 255, 0, 127), new Rectangle2D.Double(0.3, 0.4, 0.4, 0.05));
     }
 
     public synchronized void draw(Graphics2D g) {
@@ -40,14 +53,9 @@ public class InfoPanel {
         g.setColor(new Color(127, 127, 127, 127));
         d.drawRect(new Rectangle(0, 0, 1, 1));
         g.setColor(Color.BLACK);
-        d.drawString(c.getX() + ", " + c.getY(), 0.5, 0.05);
-        d.drawString(c.getSex(), 0.5, 0.5);
-        d.drawString("Age: "+c.getAge(), 0.5, 0.55);
-        d.drawString("Stamina: "+c.getStamina(), 0.5, 0.6);
-        d.drawString("Range: "+c.range, 0.5, 0.65);
-        d.drawString("Inner loc: "+c.innerloc.getX()+", "+c.innerloc.getY(), 0.5, 0.7);
-        d.drawString("Name: "+c.name, 0.5, 0.75);
-        d.drawString("Loc: "+c.getX()+", "+c.getY(), 0.5, 0.8);
+        int index = 0;
+        for (Map.Entry<String, Supplier<String>> e : properties.entrySet())
+            d.drawString(e.getKey() + ": " + e.getValue().get(), 0.5, 0.5 + 0.05 * index++);
         c.net.draw(new Drawer(Arith.shift(Arith.scale(scale(), 0.7, 0.3), 0, -scale().getHeight() / 4), g));
         openet.draw(d);
         if (draweditor)
@@ -70,7 +78,8 @@ public class InfoPanel {
                 for (int i = 0; i < c.net.nodes.size(); i++) {
                     NOR node = c.net.nodes.get(i);
                     if (node != null) {
-                        if (new Rectangle2D.Double(node.getX() - 0.005, node.getY() - 0.009, 0.01, 0.018).contains(click)) {
+                        if (new Rectangle2D.Double(node.getX() - 0.005, node.getY() - 0.009, 0.01, 0.018)
+                                .contains(click)) {
                             moveid = i;
                             clickx = click.getX();
                             clicky = click.getY();
@@ -94,7 +103,7 @@ public class InfoPanel {
         if (scaleEdit().contains(p.getPoint())) {
             Rectangle2D rect = Arith.scale(scaleEdit(), 0.9f);
             Point2D click = new Point2D.Float((float) ((p.getX() - rect.getX()) / rect.getWidth()),
-            (float) ((p.getY() - rect.getY()) / rect.getHeight()));
+                    (float) ((p.getY() - rect.getY()) / rect.getHeight()));
             if (p.getButton() == MouseEvent.BUTTON1) {
                 if (moveid != -1) {
                     if (Math.abs(clickx - click.getX()) < 0.02 && Math.abs(clicky - click.getY()) < 0.02) {

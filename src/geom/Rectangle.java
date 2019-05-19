@@ -3,7 +3,7 @@ import java.awt.Graphics2D;
 import calc.Arith;
 
 
-public class Rectangle {
+public class Rectangle implements Shape{
     Point start, end;
 
     public Rectangle(Point start, double w, double h) {
@@ -17,6 +17,10 @@ public class Rectangle {
 
     public boolean intersects(Rectangle r) {
         return start.x < r.end.x && end.x > r.start.x && start.y > r.end.y && end.y < r.start.y;
+    }
+
+    public boolean intersects(Shape s) {
+        return s.intersects(this);
     }
 
     double getWidth() {
@@ -64,12 +68,5 @@ public class Rectangle {
     }
     Rectangle retincrement(double i){
         return new Rectangle(start.retmove(-i, -i), getWidth()+2*i, getHeight()+2*i);
-    }
-    public boolean intersects(Line l){
-        return  l.intersects(new Line(cornerPoint(0, 0), cornerPoint(1, 0))) ||
-                l.intersects(new Line(cornerPoint(1, 0), cornerPoint(1, 1))) ||
-                l.intersects(new Line(cornerPoint(1, 1), cornerPoint(0, 1))) ||
-                l.intersects(new Line(cornerPoint(0, 1), cornerPoint(0, 0))) ||
-                contains(l.a) || contains(l.b);
     }
 }

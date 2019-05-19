@@ -5,10 +5,10 @@ import java.util.HashSet;
 
 public class NOR {
 	boolean val, nextval;
-	public HashSet<Short> in;
-	public HashSet<Short> out;
+	public final HashSet<Short> in;
+	public final HashSet<Short> out;
 	float x, y;
-	Network holder;
+	final Network holder;
 	public NOR(boolean val1, Short[] in1, float x1, float y1, Network holder) {
 		val = val1;
 		in = new HashSet<>(Arrays.asList(in1));

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import command.Command;
 import command.Find;
@@ -13,17 +14,16 @@ import managers.QuadTree;
 
 public class Terminal {
     boolean active = false;
-    ArrayList<String> history = new ArrayList<String>();
+    final ArrayList<String> history = new ArrayList<String>();
     String command = "";
     Rectangle2D bounds;
-    QuadTree tree;
-    ArrayList<Command> commands = new ArrayList<Command>();
+    final QuadTree tree;
+    final ArrayList<Command> commands;
 
     public Terminal(Rectangle2D bounds, QuadTree tree, ControlManager controls) {
         this.bounds = bounds;
         this.tree = tree;
-        commands.add(new Find(controls));
-        commands.add(new Goto(controls));
+        commands = new ArrayList<>(Arrays.asList(new Find(controls), new Goto(controls)));
     }
 
     public void type(char c) {
